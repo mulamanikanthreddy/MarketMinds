@@ -1,0 +1,96 @@
+# MarketMind — Full Stack Setup
+
+## File Structure
+```
+marketmind-backend/
+  server.js              ← Node.js backend (zero npm dependencies)
+  start.js               ← Entry point (loads .env then starts server)
+  .env.example           ← Copy to .env and fill in your API key
+  db/
+    marketmind.json      ← Auto-created user database
+  marketmind-login.html  ← Login / Register page
+  marketmind-main.html   ← Main app (connects to backend)
+```
+
+## Quick Start
+
+### 1. Add your Anthropic API key
+```bash
+cp .env.example .env
+# Open .env and set:
+#   ANTHROPIC_API_KEY=sk-ant-...your-key...
+```
+
+### 2. Start the backend server
+```bash
+node start.js
+```
+You'll see:
+```
+╔══════════════════════════════════════════╗
+║   MarketMind Backend  — port 3001        ║
+╚══════════════════════════════════════════╝
+  Anthropic key: ✓ set
+```
+
+### 3. Open the app
+Open `marketmind-main.html` in your browser (double-click or use a local server).
+
+Use `Live Server` in VS Code or:
+```bash
+npx serve .
+# or
+python3 -m http.server 5500
+```
+
+Then visit: http://localhost:5500/marketmind-main.html
+
+---
+
+## API Endpoints
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET  | `/api/health` | — | Server health check |
+| POST | `/api/auth/register` | — | Create account |
+| POST | `/api/auth/login` | — | Sign in, returns JWT |
+| POST | `/api/auth/logout` | JWT | Revoke token |
+| GET  | `/api/auth/me` | JWT | Get current user |
+| POST | `/api/ai/strategy` | JWT | Generate AI strategy |
+| POST | `/api/ai/chat` | JWT | Ask AI a question |
+
+---
+
+## Authentication Flow
+
+```
+User fills login form
+       ↓
+POST /api/auth/login
+       ↓
+Server verifies password (HMAC-SHA256)
+       ↓
+Returns JWT token
+       ↓
+Frontend stores token in localStorage
+       ↓
+All AI requests include: Authorization: Bearer <token>
+       ↓
+Server verifies JWT + calls Anthropic (API key stays server-side)
+```
+
+---
+
+## Security Features
+- Passwords hashed with HMAC-SHA256 + random salt (never stored plain)
+- JWT signed with HS256, 24-hour expiry
+- Token blacklist on logout (persisted to disk)
+- Rate limiting: 10 auth attempts / minute per IP, 20 AI calls / minute per user
+- Anthropic API key never exposed to frontend
+- CORS restricted to configured origins
+
+---
+
+## Requirements
+- Node.js 16+ (built-in modules only — no npm install needed)
+- An Anthropic API key from console.anthropic.com
